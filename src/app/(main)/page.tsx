@@ -21,10 +21,15 @@ export default function Dashboard() {
   const activeChallenges = challenges.filter((c) => c.end_date >= today);
 
   useEffect(() => {
-    if (user) {
-      setStarredId(store.getStarredChallengeId(user.id) || (activeChallenges[0]?.id ?? null));
+    if (!user) return;
+    const saved = store.getStarredChallengeId(user.id);
+    if (saved && activeChallenges.some((c) => c.id === saved)) {
+      setStarredId(saved);
+    } else if (activeChallenges.length > 0) {
+      // Default to first (or only) challenge
+      setStarredId(activeChallenges[0].id);
     }
-  }, [user]);
+  }, [user, activeChallenges.length]);
 
   const handleStar = (challengeId: string) => {
     if (!user) return;
