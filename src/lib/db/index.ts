@@ -71,6 +71,11 @@ export async function createChallenge(challenge: {
     event_type: challenge.event_type,
   }).select().single();
 
+  if (error) {
+    console.error("createChallenge error:", error);
+    return null;
+  }
+
   return data as Challenge | null;
 }
 

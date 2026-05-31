@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/supabase-provider";
-import { signUp, signIn } from "@/lib/actions/auth-actions";
+import { signUp } from "@/lib/actions/auth-actions";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GameOfLife } from "@/components/shared/game-of-life";
@@ -35,30 +36,36 @@ export default function LoginPage() {
     }
   };
 
+  const doClientLogin = async (id: string, pass: string): Promise<boolean> => {
+    const supabase = createClient();
+    if (!supabase) return false;
+    const email = `${id.replace("0x", "")}@streaksync.local`;
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) return false;
+    await refreshAuth();
+    return true;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const result = await signIn(hexId, password);
+    const success = await doClientLogin(hexId, password);
     setLoading(false);
-    if (result.success) {
-      await refreshAuth();
+    if (success) {
       router.push("/");
-      router.refresh();
     } else {
-      setError(result.error || "Login failed");
+      setError("Invalid ID or password");
     }
   };
 
   const handleLoginWithGenerated = async () => {
     if (!generatedCreds) return;
     setLoading(true);
-    const result = await signIn(generatedCreds.hexId, generatedCreds.password);
+    const success = await doClientLogin(generatedCreds.hexId, generatedCreds.password);
     setLoading(false);
-    if (result.success) {
-      await refreshAuth();
+    if (success) {
       router.push("/");
-      router.refresh();
     }
   };
 
@@ -69,9 +76,7 @@ export default function LoginPage() {
         <GameOfLife className="absolute inset-0 opacity-30" seed="login-bg" slow />
         <div className="relative flex flex-col items-center gap-8 text-center max-w-sm w-full">
           <div>
-            <h1 className="text-2xl font-bold tracking-wider uppercase">
-              StreakSync
-            </h1>
+            <h1 className="text-2xl font-bold tracking-wider uppercase">StreakSync</h1>
             <p className="text-xs text-muted-foreground mt-3">
               Track challenges with friends.<br />No email needed.
             </p>
