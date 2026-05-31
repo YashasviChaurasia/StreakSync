@@ -20,22 +20,36 @@ export default function NewChallengePage() {
   const [duration, setDuration] = useState(21);
   const [visibility, setVisibility] = useState<"private" | "public">("private");
   const [eventType, setEventType] = useState<"join" | "watch">("join");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !title.trim()) return;
+    if (!user || !title.trim() || submitting) return;
 
-    const result = await db.createChallenge({
-      title: title.trim(),
-      description: description.trim() || null,
-      owner_id: user.id,
-      start_date: format(new Date(), "yyyy-MM-dd"),
-      end_date: format(addDays(new Date(), duration), "yyyy-MM-dd"),
-      visibility,
-      event_type: eventType,
-    });
+    setSubmitting(true);
+    setError("");
 
-    if (result) router.push(`/challenges/${result.id}`);
+    try {
+      const result = await db.createChallenge({
+        title: title.trim(),
+        description: description.trim() || null,
+        owner_id: user.id,
+        start_date: format(new Date(), "yyyy-MM-dd"),
+        end_date: format(addDays(new Date(), duration), "yyyy-MM-dd"),
+        visibility,
+        event_type: eventType,
+      });
+
+      if (result) {
+        router.push(`/challenges/${result.id}`);
+      } else {
+        setError("Failed to create. Check console for details.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Unknown error");
+    }
+    setSubmitting(false);
   };
 
   return (
@@ -154,12 +168,14 @@ export default function NewChallengePage() {
           </div>
         </div>
 
+        {error && <p className="text-[10px] text-red-500">{error}</p>}
+
         <Button
           type="submit"
           className="w-full h-10 text-xs font-mono uppercase tracking-wider"
-          disabled={!title.trim()}
+          disabled={!title.trim() || submitting}
         >
-          Create Challenge
+          {submitting ? "Creating..." : "Create Challenge"}
         </Button>
       </form>
     </div>

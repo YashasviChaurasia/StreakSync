@@ -72,8 +72,8 @@ export async function createChallenge(challenge: {
   }).select().single();
 
   if (error) {
-    console.error("createChallenge error:", error);
-    return null;
+    console.error("createChallenge error:", error.message, error.details, error.hint);
+    throw new Error(error.message);
   }
 
   return data as Challenge | null;
