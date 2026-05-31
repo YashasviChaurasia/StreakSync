@@ -5,7 +5,9 @@ export function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    // During build/prerender, env vars may not be available
+    // Return a dummy that won't be called at runtime
+    return null as any;
   }
 
   return createBrowserClient(url, key);
