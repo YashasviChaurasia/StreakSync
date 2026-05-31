@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { GameOfLife } from "@/components/shared/game-of-life";
 
 export default function LoginPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refresh: refreshAuth } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<"landing" | "login" | "signup-result">("landing");
   const [hexId, setHexId] = useState("");
@@ -42,7 +42,9 @@ export default function LoginPage() {
     const result = await signIn(hexId, password);
     setLoading(false);
     if (result.success) {
+      await refreshAuth();
       router.push("/");
+      router.refresh();
     } else {
       setError(result.error || "Login failed");
     }
@@ -54,7 +56,9 @@ export default function LoginPage() {
     const result = await signIn(generatedCreds.hexId, generatedCreds.password);
     setLoading(false);
     if (result.success) {
+      await refreshAuth();
       router.push("/");
+      router.refresh();
     }
   };
 
