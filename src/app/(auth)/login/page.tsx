@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useEffect } from "react";
 
 export default function LoginPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<"landing" | "login" | "signup-result">("landing");
   const [hexId, setHexId] = useState("");
@@ -19,8 +19,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) router.replace("/");
-  }, [user, router]);
+    if (!authLoading && user) router.replace("/");
+  }, [user, authLoading, router]);
 
   const handleSignUp = async () => {
     setLoading(true);
