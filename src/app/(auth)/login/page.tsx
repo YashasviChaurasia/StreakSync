@@ -76,26 +76,29 @@ export default function LoginPage() {
         <GameOfLife className="absolute inset-0 opacity-30" seed="login-bg" slow />
         <div className="relative flex flex-col items-center gap-8 text-center max-w-sm w-full">
           <div>
-            <h1 className="text-2xl font-bold tracking-wider uppercase">StreakSync</h1>
-            <p className="text-xs text-muted-foreground mt-3">
+            <h1 className="text-3xl font-light tracking-wider uppercase">StreakSync</h1>
+            <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
               Track challenges with friends.<br />No email needed.
             </p>
           </div>
 
           <div className="w-full space-y-2">
-            <Button onClick={handleSignUp} className="w-full h-11 text-[11px] uppercase tracking-widest" disabled={loading}>
+            <Button onClick={handleSignUp} className="w-full h-12 text-xs uppercase tracking-widest" disabled={loading}>
               {loading ? "..." : "Generate New ID"}
             </Button>
             <button
               onClick={() => setMode("login")}
-              className="w-full text-[11px] text-muted-foreground hover:text-foreground uppercase tracking-wider py-2"
+              className="w-full text-xs text-muted-foreground hover:text-foreground uppercase tracking-wider py-2"
             >
               I have an ID
             </button>
           </div>
 
-          {error && <p className="text-[10px] text-red-500">{error}</p>}
+          {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
+        <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[11px] tracking-[0.2em] uppercase text-muted-foreground/30">
+          StreakSync
+        </p>
       </div>
     );
   }
@@ -107,27 +110,30 @@ export default function LoginPage() {
         <GameOfLife className="absolute inset-0 opacity-20" seed="login-bg" slow />
         <div className="relative flex flex-col items-center gap-6 text-center max-w-sm w-full">
           <div>
-            <h1 className="text-xl font-bold uppercase tracking-wider">Your Credentials</h1>
-            <p className="text-[10px] text-muted-foreground mt-2">
+            <h1 className="text-2xl font-light uppercase tracking-wider">Your Credentials</h1>
+            <p className="text-xs text-muted-foreground mt-3">
               Save these — they cannot be recovered.
             </p>
           </div>
 
-          <div className="w-full p-4 border border-border bg-card space-y-3 text-left">
+          <div className="w-full p-5 border border-border bg-card space-y-4 text-left">
             <div>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wider">ID</p>
-              <p className="text-lg font-bold mt-0.5">{generatedCreds.hexId}</p>
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">ID</p>
+              <p className="text-xl font-bold mt-1">{generatedCreds.hexId}</p>
             </div>
             <div>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Password</p>
-              <p className="text-lg font-bold mt-0.5">{generatedCreds.password}</p>
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Password</p>
+              <p className="text-xl font-bold mt-1">{generatedCreds.password}</p>
             </div>
           </div>
 
-          <Button onClick={handleLoginWithGenerated} className="w-full h-11 text-[11px] uppercase tracking-widest" disabled={loading}>
+          <Button onClick={handleLoginWithGenerated} className="w-full h-12 text-xs uppercase tracking-widest" disabled={loading}>
             {loading ? "..." : "I've saved it — Log in"}
           </Button>
         </div>
+        <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[11px] tracking-[0.2em] uppercase text-muted-foreground/30">
+          StreakSync
+        </p>
       </div>
     );
   }
@@ -137,14 +143,14 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen flex-col items-center justify-center px-6">
       <GameOfLife className="absolute inset-0 opacity-20" seed="login-bg" slow />
       <div className="relative flex flex-col items-center gap-6 text-center max-w-sm w-full">
-        <h1 className="text-xl font-bold uppercase tracking-wider">Log In</h1>
+        <h1 className="text-2xl font-light uppercase tracking-wider">Log In</h1>
 
         <form onSubmit={handleLogin} className="w-full space-y-3">
           <Input
             placeholder="Hex ID (e.g. 0xa3f)"
             value={hexId}
             onChange={(e) => setHexId(e.target.value)}
-            className="h-10 text-sm border-border"
+            className="h-11 text-sm border-border"
             required
           />
           <Input
@@ -152,22 +158,25 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-10 text-sm border-border"
+            className="h-11 text-sm border-border"
             required
           />
-          {error && <p className="text-[10px] text-red-500">{error}</p>}
-          <Button type="submit" className="w-full h-11 text-[11px] uppercase tracking-widest" disabled={loading}>
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <Button type="submit" className="w-full h-12 text-xs uppercase tracking-widest" disabled={loading}>
             {loading ? "..." : "Enter"}
           </Button>
         </form>
 
         <button
           onClick={() => setMode("landing")}
-          className="text-[10px] text-muted-foreground hover:text-foreground uppercase tracking-wider"
+          className="text-xs text-muted-foreground hover:text-foreground uppercase tracking-wider"
         >
           Back
         </button>
       </div>
+      <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[11px] tracking-[0.2em] uppercase text-muted-foreground/30">
+        StreakSync
+      </p>
     </div>
   );
 }

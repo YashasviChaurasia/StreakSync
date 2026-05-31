@@ -115,7 +115,7 @@ export function Heatmap({ data }: HeatmapProps) {
       <div className="flex gap-3 items-start">
         {monthBlocks.map((block) => (
           <div key={block.label} className="flex-1 min-w-0">
-            <p className="text-[9px] uppercase text-muted-foreground mb-1 tracking-wider">
+            <p className="text-[11px] uppercase text-muted-foreground mb-1 tracking-wider">
               {block.label}
             </p>
             <div className="flex gap-[2px]">
@@ -135,13 +135,13 @@ export function Heatmap({ data }: HeatmapProps) {
                           "aspect-square transition-all duration-300",
                           intensity === -1 && "bg-transparent",
                           intensity === -2 && "bg-transparent",
-                          intensity === 0 && !isBlinking && "bg-muted dark:bg-[#1e1e1e]",
+                          intensity === 0 && !isBlinking && "bg-muted dark:bg-[#1c1c1c]",
                           intensity === 0 && isBlinking && "bg-red-500/80 dark:bg-red-500/70",
                           intensity > 0 && intensity < 0.34 && !isSparkling && "bg-green-400/60 dark:bg-green-700",
                           intensity >= 0.34 && intensity < 0.67 && !isSparkling && "bg-green-500 dark:bg-green-600",
                           intensity >= 0.67 && intensity < 1 && !isSparkling && "bg-green-600 dark:bg-green-500",
                           intensity >= 1 && !isSparkling && "bg-green-700 dark:bg-green-400",
-                          intensity > 0 && isSparkling && "bg-green-300 dark:bg-green-300 shadow-[0_0_6px_rgba(74,222,128,0.8)]",
+                          intensity > 0 && isSparkling && "bg-green-300 dark:bg-green-300",
                           isTodayDate && "ring-1 ring-foreground/40"
                         )}
                       />
@@ -155,13 +155,13 @@ export function Heatmap({ data }: HeatmapProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-end gap-1.5 mt-3 text-[9px] text-muted-foreground">
+      <div className="flex items-center justify-end gap-1.5 mt-3 text-[11px] text-muted-foreground">
         <span>less</span>
-        <div className="h-2 w-2 bg-muted dark:bg-[#1e1e1e]" />
-        <div className="h-2 w-2 bg-green-400/60 dark:bg-green-700" />
-        <div className="h-2 w-2 bg-green-500 dark:bg-green-600" />
-        <div className="h-2 w-2 bg-green-600 dark:bg-green-500" />
-        <div className="h-2 w-2 bg-green-700 dark:bg-green-400" />
+        <div className="h-2.5 w-2.5 bg-muted dark:bg-[#1c1c1c]" />
+        <div className="h-2.5 w-2.5 bg-green-400/60 dark:bg-green-700" />
+        <div className="h-2.5 w-2.5 bg-green-500 dark:bg-green-600" />
+        <div className="h-2.5 w-2.5 bg-green-600 dark:bg-green-500" />
+        <div className="h-2.5 w-2.5 bg-green-700 dark:bg-green-400" />
         <span>more</span>
       </div>
     </div>

@@ -11,9 +11,9 @@ export function StreakFlame({ count, size = "md" }: StreakFlameProps) {
   if (count === 0) return null;
 
   const sizes = {
-    sm: "text-[9px]",
-    md: "text-[10px]",
-    lg: "text-xs",
+    sm: "text-[11px]",
+    md: "text-xs",
+    lg: "text-sm",
   };
 
   return (

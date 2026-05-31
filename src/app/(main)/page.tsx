@@ -116,7 +116,7 @@ export default function Dashboard() {
   const starredChallenge = activeChallenges.find((c) => c.id === starredId);
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-[540px]">
       {/* Game of Life banner */}
       <div className="relative w-full h-44 overflow-hidden">
         <GameOfLife className="absolute inset-0" seed={user?.id || "default"} />
@@ -126,11 +126,11 @@ export default function Dashboard() {
             <AvatarFallback className="text-base">{user?.name?.[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg leading-tight">{user?.name}</h1>
+            <h1 className="text-xl leading-tight">{user?.name}</h1>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[9px] text-muted-foreground">{activeChallenges.length} active</span>
+              <span className="text-xs text-muted-foreground">{activeChallenges.length} active</span>
               {maxStreak > 0 && (
-                <span className="text-[10px] font-bold text-green-500 drop-shadow-[0_0_4px_rgba(34,197,94,0.6)]">{maxStreak}d</span>
+                <span className="text-xs font-bold text-green-500">{maxStreak}d</span>
               )}
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function Dashboard() {
         {/* Starred heatmap */}
         {starredChallenge && (
           <section className="mb-8">
-            <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider mb-2">
+            <p className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider mb-2">
               {starredChallenge.title}
             </p>
             <Heatmap data={starredHeatmap} />
@@ -152,7 +152,7 @@ export default function Dashboard() {
         {/* Challenges */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-mono">Challenges</h2>
+            <h2 className="text-base font-mono">Challenges</h2>
             <Link
               href="/challenges/new"
               className="flex h-6 w-6 items-center justify-center border border-border hover:bg-muted transition-colors"
@@ -168,9 +168,9 @@ export default function Dashboard() {
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value)}
               placeholder="Enter invite code..."
-              className="flex-1 h-8 px-2 text-[10px] bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none"
+              className="flex-1 h-9 px-3 text-xs bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
-            <button type="submit" disabled={!joinCode.trim()} className="text-[10px] text-green-500 disabled:text-muted-foreground px-2">
+            <button type="submit" disabled={!joinCode.trim()} className="text-xs text-green-500 disabled:text-muted-foreground px-2">
               join
             </button>
           </form>
@@ -187,11 +187,11 @@ export default function Dashboard() {
                     >
                       <span className="text-sm truncate">{c.title}</span>
                       {isAdmin && (
-                        <span className="text-[8px] px-1 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 uppercase tracking-wider shrink-0">
+                        <span className="text-[10px] px-1.5 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 uppercase tracking-wider shrink-0">
                           admin
                         </span>
                       )}
-                      <span className="font-mono text-[9px] text-muted-foreground ml-auto shrink-0">
+                      <span className="font-mono text-[11px] text-muted-foreground ml-auto shrink-0">
                         {memberCounts[c.id] || 0}
                       </span>
                     </Link>
@@ -212,11 +212,11 @@ export default function Dashboard() {
           {/* Pending requests */}
           {pendingChallenges.length > 0 && (
             <div className="mt-3 space-y-1">
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Pending</p>
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Pending</p>
               {pendingChallenges.map((p: any) => (
                 <div key={p.membership.id} className="flex items-center py-2.5 px-3 border border-border bg-card opacity-60">
                   <span className="text-sm truncate">{p.challenge?.title}</span>
-                  <span className="text-[8px] text-muted-foreground ml-auto">awaiting approval</span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">awaiting approval</span>
                 </div>
               ))}
             </div>
@@ -224,13 +224,16 @@ export default function Dashboard() {
         </section>
 
         {/* Footer */}
-        <div className="pb-8 pt-4 border-t border-border">
+        <div className="pb-10 pt-8 border-t border-border flex items-center justify-between">
           <button
             onClick={signOut}
-            className="font-mono text-[9px] text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             sign out
           </button>
+          <span className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground/30">
+            StreakSync
+          </span>
         </div>
       </div>
     </div>

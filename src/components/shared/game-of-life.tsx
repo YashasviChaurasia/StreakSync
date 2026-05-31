@@ -102,10 +102,10 @@ export function GameOfLife({ className, seed = "default", slow = false }: GameOf
       const interval = slow ? 12 : 4;
       if (frameCount % interval === 0) step();
 
-      ctx.fillStyle = "#0d0d0d";
+      ctx.fillStyle = "#0a0a0a";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = "#2a2825";
+      ctx.fillStyle = "#1a1a1a";
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           if (grid[y * cols + x]) {

@@ -143,16 +143,16 @@ export default function ChallengeDetailPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-lg px-5 py-8">
+    <div className="mx-auto max-w-[540px] px-5 py-8">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl truncate">{challenge.title}</h1>
+          <h1 className="text-2xl truncate">{challenge.title}</h1>
           {challenge.description && (
-            <p className="text-xs text-muted-foreground mt-0.5">{challenge.description}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">{challenge.description}</p>
           )}
         </div>
         <div className="flex items-center gap-1.5">
@@ -164,7 +164,7 @@ export default function ChallengeDetailPage() {
               <Pencil className="h-3.5 w-3.5" />
             </button>
           )}
-          <span className="text-[9px] text-muted-foreground font-mono">{challenge.invite_code}</span>
+          <span className="text-[11px] text-muted-foreground font-mono">{challenge.invite_code}</span>
           <button onClick={handleCopyInvite} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors" title="Copy invite link">
             <Link2 className="h-3.5 w-3.5" />
           </button>
@@ -176,18 +176,18 @@ export default function ChallengeDetailPage() {
         <div className="mb-6 p-3 border border-border bg-card space-y-2">
           <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Name" className="h-8 text-sm border-border" />
           <Textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description" className="text-sm border-border min-h-[60px] resize-none" rows={3} />
-          <button onClick={handleSaveEdit} className="text-[9px] text-green-500 hover:underline">save</button>
+          <button onClick={handleSaveEdit} className="text-xs text-green-500 hover:underline">save</button>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-4 mb-6 border-b border-border">
+      <div className="flex gap-6 mb-6 border-b border-border">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={cn(
-              "pb-2 text-[10px] uppercase tracking-wider transition-colors border-b-2 -mb-px",
+              "pb-3 text-xs uppercase tracking-wider transition-colors border-b-2 -mb-px",
               tab === t.key
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -209,7 +209,7 @@ export default function ChallengeDetailPage() {
           {/* Tasks */}
           {(isJoinMode || isOwner) && (
             <section>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-2">Tasks</p>
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2">Tasks</p>
               <div className="space-y-1">
                 {todayTasks.map((item) => (
                   <div key={item.task.id} className="flex items-center gap-1">
@@ -219,7 +219,7 @@ export default function ChallengeDetailPage() {
                     {isOwner && (
                       <button
                         onClick={() => handleDeleteTask(item.task.id)}
-                        className="text-[9px] text-muted-foreground hover:text-destructive px-1 shrink-0"
+                        className="text-xs text-muted-foreground hover:text-destructive px-1 shrink-0"
                       >
                         x
                       </button>
@@ -232,10 +232,10 @@ export default function ChallengeDetailPage() {
                   {showAddTask ? (
                     <form onSubmit={handleAddTask} className="flex gap-2 mt-2">
                       <Input placeholder="New task..." value={newTask} onChange={(e) => setNewTask(e.target.value)} className="h-8 text-sm flex-1 border-border" autoFocus />
-                      <button type="submit" className="text-[10px] text-green-500">add</button>
+                      <button type="submit" className="text-xs text-green-500">add</button>
                     </form>
                   ) : (
-                    <button onClick={() => setShowAddTask(true)} className="flex items-center gap-1 mt-2 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                    <button onClick={() => setShowAddTask(true)} className="flex items-center gap-1 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
                       <Plus className="h-3 w-3" /> add task
                     </button>
                   )}
@@ -258,7 +258,7 @@ export default function ChallengeDetailPage() {
             <button onClick={() => setWallDate(format(subDays(new Date(wallDate), 1), "yyyy-MM-dd"))} className="p-1 text-muted-foreground hover:text-foreground">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {wallDate === today ? "today" : format(new Date(wallDate), "MMM d, yyyy")}
             </span>
             <button
@@ -273,7 +273,7 @@ export default function ChallengeDetailPage() {
           {wallDate === today && (
             <div className="flex gap-2 mb-4">
               <Input placeholder="Write something..." value={noteText} onChange={(e) => setNoteText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handlePostNote()} className="h-8 text-sm flex-1 border-border" />
-              <button onClick={handlePostNote} disabled={!noteText.trim()} className="text-[10px] text-green-500 disabled:text-muted-foreground">post</button>
+              <button onClick={handlePostNote} disabled={!noteText.trim()} className="text-xs text-green-500 disabled:text-muted-foreground">post</button>
             </div>
           )}
 
@@ -284,9 +284,9 @@ export default function ChallengeDetailPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <Avatar className="h-4 w-4">
                       <AvatarImage src={n.user?.avatar_url || undefined} />
-                      <AvatarFallback className="text-[7px]">{n.user?.name?.[0]}</AvatarFallback>
+                      <AvatarFallback className="text-[9px]">{n.user?.name?.[0]}</AvatarFallback>
                     </Avatar>
-                    <span className="text-[11px] font-medium">{n.user?.name}</span>
+                    <span className="text-sm font-medium">{n.user?.name}</span>
                   </div>
                   <p className="text-xs text-foreground/80 pl-6">{n.text}</p>
                 </div>
@@ -365,7 +365,7 @@ function ParticipantsTab({ challengeId, members, tasks, isOwner, onRefresh }: {
     <div className="space-y-5">
       {isOwner && pending.length > 0 && (
         <div className="p-3 border border-border bg-card mb-4">
-          <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-2">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2">
             Pending ({pending.length})
           </p>
           <div className="space-y-2">
@@ -373,8 +373,8 @@ function ParticipantsTab({ challengeId, members, tasks, isOwner, onRefresh }: {
               <div key={p.id} className="flex items-center justify-between py-1.5">
                 <span className="text-xs">{p.user?.name}</span>
                 <div className="flex gap-2">
-                  <button onClick={() => handleApprove(p.id)} className="text-[9px] text-green-500 hover:underline">approve</button>
-                  <button onClick={() => handleDeny(p.id)} className="text-[9px] text-muted-foreground hover:underline">deny</button>
+                  <button onClick={() => handleApprove(p.id)} className="text-xs text-green-500 hover:underline">approve</button>
+                  <button onClick={() => handleDeny(p.id)} className="text-xs text-muted-foreground hover:underline">deny</button>
                 </div>
               </div>
             ))}
@@ -391,7 +391,7 @@ function ParticipantsTab({ challengeId, members, tasks, isOwner, onRefresh }: {
             </Avatar>
             <span className="text-xs font-medium flex-1">{m.user?.name}</span>
             <StreakFlame count={memberStreaks.get(m.user_id) || 0} size="sm" />
-            {m.role === "owner" && <span className="text-[8px] text-muted-foreground">owner</span>}
+            {m.role === "owner" && <span className="text-[10px] text-muted-foreground">owner</span>}
           </div>
           <Heatmap data={memberHeatmaps.get(m.user_id) || new Map()} />
         </div>

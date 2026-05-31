@@ -28,18 +28,18 @@ export function TaskRow({ item, onUpdate, showChallenge = false }: TaskRowProps)
   return (
     <div
       className={cn(
-        "flex items-center gap-3 py-2.5 px-3 border transition-all",
+        "flex items-center gap-3 py-3 px-4 border transition-all",
         isCompleted
-          ? "border-green-600/30 bg-green-950/5 dark:border-green-500/20 dark:bg-green-950/10 shadow-[0_0_8px_rgba(34,197,94,0.1)]"
+          ? "border-green-600/30 bg-green-950/5 dark:border-green-500/20 dark:bg-green-950/10"
           : "border-border bg-card"
       )}
     >
       <button
         onClick={handleToggle}
         className={cn(
-          "flex h-5 w-5 shrink-0 items-center justify-center border transition-all",
+          "flex h-[22px] w-[22px] shrink-0 items-center justify-center border transition-all",
           isCompleted
-            ? "border-green-500 bg-green-600 text-white shadow-[0_0_6px_rgba(34,197,94,0.5)]"
+            ? "border-green-500 bg-green-600 text-white"
             : "border-foreground/30"
         )}
       >
@@ -54,7 +54,7 @@ export function TaskRow({ item, onUpdate, showChallenge = false }: TaskRowProps)
           {task.title}
         </p>
         {showChallenge && (
-          <p className="font-mono text-[9px] text-muted-foreground truncate">
+          <p className="font-mono text-[11px] text-muted-foreground truncate">
             {challenge.title}
           </p>
         )}

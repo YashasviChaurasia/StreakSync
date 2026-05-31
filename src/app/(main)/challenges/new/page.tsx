@@ -39,12 +39,12 @@ export default function NewChallengePage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg px-5 py-8">
+    <div className="mx-auto max-w-[540px] px-5 py-8">
       <div className="flex items-center gap-3 mb-8">
         <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-xl">New Challenge</h1>
+        <h1 className="text-2xl">New Challenge</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -66,7 +66,7 @@ export default function NewChallengePage() {
 
         {/* Duration */}
         <div>
-          <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider mb-2">
+          <p className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider mb-2">
             Duration
           </p>
           <div className="flex flex-wrap gap-1">
@@ -76,7 +76,7 @@ export default function NewChallengePage() {
                 type="button"
                 onClick={() => setDuration(d)}
                 className={cn(
-                  "px-3 py-1.5 text-xs font-mono border transition-colors",
+                  "px-4 py-2 text-xs font-mono border transition-colors",
                   duration === d
                     ? "border-foreground bg-foreground text-background"
                     : "border-border bg-card text-muted-foreground hover:text-foreground"
@@ -90,7 +90,7 @@ export default function NewChallengePage() {
 
         {/* Type */}
         <div>
-          <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider mb-2">
+          <p className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider mb-2">
             Type
           </p>
           <div className="flex gap-1">
@@ -98,7 +98,7 @@ export default function NewChallengePage() {
               type="button"
               onClick={() => setEventType("join")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border transition-colors",
+                "flex items-center gap-1.5 px-4 py-2 text-xs font-mono border transition-colors",
                 eventType === "join"
                   ? "border-foreground bg-foreground text-background"
                   : "border-border bg-card text-muted-foreground"
@@ -110,7 +110,7 @@ export default function NewChallengePage() {
               type="button"
               onClick={() => setEventType("watch")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border transition-colors",
+                "flex items-center gap-1.5 px-4 py-2 text-xs font-mono border transition-colors",
                 eventType === "watch"
                   ? "border-foreground bg-foreground text-background"
                   : "border-border bg-card text-muted-foreground"
@@ -123,7 +123,7 @@ export default function NewChallengePage() {
 
         {/* Visibility */}
         <div>
-          <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider mb-2">
+          <p className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider mb-2">
             Visibility
           </p>
           <div className="flex gap-1">
@@ -131,7 +131,7 @@ export default function NewChallengePage() {
               type="button"
               onClick={() => setVisibility("private")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border transition-colors",
+                "flex items-center gap-1.5 px-4 py-2 text-xs font-mono border transition-colors",
                 visibility === "private"
                   ? "border-foreground bg-foreground text-background"
                   : "border-border bg-card text-muted-foreground"
@@ -143,7 +143,7 @@ export default function NewChallengePage() {
               type="button"
               onClick={() => setVisibility("public")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border transition-colors",
+                "flex items-center gap-1.5 px-4 py-2 text-xs font-mono border transition-colors",
                 visibility === "public"
                   ? "border-foreground bg-foreground text-background"
                   : "border-border bg-card text-muted-foreground"
@@ -156,7 +156,7 @@ export default function NewChallengePage() {
 
         <Button
           type="submit"
-          className="w-full h-10 text-xs font-mono uppercase tracking-wider"
+          className="w-full h-12 text-xs font-mono uppercase tracking-wider"
           disabled={!title.trim()}
         >
           Create Challenge

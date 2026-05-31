@@ -64,9 +64,9 @@ export default function JoinPage() {
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center px-6">
       <div className="w-full max-w-xs text-center">
-        <p className="font-brand text-[9px]">StreakSync</p>
+        <p className="font-brand text-[11px]">StreakSync</p>
         <h1 className="text-2xl mt-2">{challenge.title}</h1>
-        <p className="text-[10px] text-muted-foreground mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           {daysLeft}d left · {challenge.event_type} · {challenge.visibility}
         </p>
 
@@ -77,7 +77,7 @@ export default function JoinPage() {
         ) : status === "pending" || status === "requested" ? (
           <div className="mt-8 space-y-3">
             <p className="text-xs text-muted-foreground">Request sent. Waiting for approval.</p>
-            <Button variant="outline" onClick={() => router.push("/")} className="w-full h-9 text-[10px] uppercase tracking-wider">
+            <Button variant="outline" onClick={() => router.push("/")} className="w-full h-9 text-xs uppercase tracking-wider">
               Back to dashboard
             </Button>
           </div>

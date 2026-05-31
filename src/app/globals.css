@@ -84,37 +84,37 @@
 }
 
 .dark {
-  --background: #0d0d0d;
-  --foreground: #e8e4dc;
-  --card: #161616;
-  --card-foreground: #e8e4dc;
-  --popover: #161616;
-  --popover-foreground: #e8e4dc;
-  --primary: #e8e4dc;
-  --primary-foreground: #0d0d0d;
-  --secondary: #1c1c1c;
-  --secondary-foreground: #e8e4dc;
-  --muted: #1e1e1e;
-  --muted-foreground: #7a7570;
-  --accent: #e8e4dc;
-  --accent-foreground: #0d0d0d;
+  --background: #0a0a0a;
+  --foreground: #fafaf9;
+  --card: #141414;
+  --card-foreground: #fafaf9;
+  --popover: #141414;
+  --popover-foreground: #fafaf9;
+  --primary: #fafaf9;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #fafaf9;
+  --muted: #1c1c1c;
+  --muted-foreground: #a3a3a3;
+  --accent: #fafaf9;
+  --accent-foreground: #0a0a0a;
   --destructive: #ff4040;
-  --border: #2a2825;
-  --input: #1c1c1c;
-  --ring: #e8e4dc;
-  --chart-1: #e8e4dc;
-  --chart-2: #c8c4bc;
-  --chart-3: #a8a49c;
-  --chart-4: #88847c;
-  --chart-5: #68645c;
-  --sidebar: #0d0d0d;
-  --sidebar-foreground: #e8e4dc;
-  --sidebar-primary: #e8e4dc;
-  --sidebar-primary-foreground: #0d0d0d;
-  --sidebar-accent: #1c1c1c;
-  --sidebar-accent-foreground: #e8e4dc;
-  --sidebar-border: #2a2825;
-  --sidebar-ring: #e8e4dc;
+  --border: #262626;
+  --input: #1a1a1a;
+  --ring: #fafaf9;
+  --chart-1: #fafaf9;
+  --chart-2: #d4d4d4;
+  --chart-3: #a3a3a3;
+  --chart-4: #737373;
+  --chart-5: #525252;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #fafaf9;
+  --sidebar-primary: #fafaf9;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #fafaf9;
+  --sidebar-border: #262626;
+  --sidebar-ring: #fafaf9;
 }
 
 @layer base {
@@ -122,10 +122,13 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-size: 15px;
+    line-height: 1.6;
   }
   h1, h2, h3 {
     font-family: Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -138,21 +141,20 @@
   }
   .font-brand {
     font-family: Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
   }
-  .glow {
-    box-shadow: 0 0 6px rgba(255, 255, 255, 0.08), inset 0 0 6px rgba(255, 255, 255, 0.03);
+  .rule-heavy {
+    border-top: 2px solid var(--border);
   }
-  .glow-green {
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+  .rule-light {
+    border-top: 1px solid var(--border);
   }
-  .glow-text {
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+  .text-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
   }
 }
 
-/* Pixel-art cursor for retro feel */
-* {
-  image-rendering: pixelated;
-}
