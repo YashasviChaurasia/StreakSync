@@ -164,7 +164,8 @@ export default function ChallengeDetailPage() {
               <Pencil className="h-3.5 w-3.5" />
             </button>
           )}
-          <button onClick={handleCopyInvite} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+          <span className="text-[9px] text-muted-foreground font-mono">{challenge.invite_code}</span>
+          <button onClick={handleCopyInvite} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors" title="Copy invite link">
             <Link2 className="h-3.5 w-3.5" />
           </button>
         </div>

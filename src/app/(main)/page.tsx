@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/supabase-provider";
 import { useUserChallenges } from "@/lib/hooks/use-store";
 import { Heatmap } from "@/components/challenge/heatmap";
@@ -32,7 +33,9 @@ function saveStar(userId: string, challengeId: string | null) {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const { challenges } = useUserChallenges();
+  const router = useRouter();
   const [starredId, setStarredId] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState("");
   const [starredHeatmap, setStarredHeatmap] = useState<Map<string, number>>(new Map());
   const [maxStreak, setMaxStreak] = useState(0);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
@@ -157,6 +160,20 @@ export default function Dashboard() {
               <Plus className="h-3 w-3" />
             </Link>
           </div>
+          <form
+            onSubmit={(e) => { e.preventDefault(); if (joinCode.trim()) router.push(`/join/${joinCode.trim()}`); }}
+            className="flex gap-2 mb-3"
+          >
+            <input
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value)}
+              placeholder="Enter invite code..."
+              className="flex-1 h-8 px-2 text-[10px] bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+            <button type="submit" disabled={!joinCode.trim()} className="text-[10px] text-green-500 disabled:text-muted-foreground px-2">
+              join
+            </button>
+          </form>
           {activeChallenges.length > 0 ? (
             <div className="space-y-1">
               {activeChallenges.map((c) => {
