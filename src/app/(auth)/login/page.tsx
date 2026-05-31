@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/supabase-provider";
 import { signUp, signIn } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
+import { GameOfLife } from "@/components/shared/game-of-life";
 
 export default function LoginPage() {
   const { user, loading: authLoading } = useAuth();
@@ -61,10 +61,13 @@ export default function LoginPage() {
   // Landing
   if (mode === "landing") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-6">
-        <div className="flex flex-col items-center gap-8 text-center max-w-sm w-full">
+      <div className="relative flex min-h-screen flex-col items-center justify-center px-6">
+        <GameOfLife className="absolute inset-0 opacity-30" seed="login-bg" slow />
+        <div className="relative flex flex-col items-center gap-8 text-center max-w-sm w-full">
           <div>
-            <h1 className="text-2xl font-bold tracking-wider uppercase">StreakSync</h1>
+            <h1 className="text-2xl font-bold tracking-wider uppercase">
+              StreakSync
+            </h1>
             <p className="text-xs text-muted-foreground mt-3">
               Track challenges with friends.<br />No email needed.
             </p>
@@ -88,11 +91,12 @@ export default function LoginPage() {
     );
   }
 
-  // Signup result — show credentials
+  // Signup result
   if (mode === "signup-result" && generatedCreds) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-6">
-        <div className="flex flex-col items-center gap-6 text-center max-w-sm w-full">
+      <div className="relative flex min-h-screen flex-col items-center justify-center px-6">
+        <GameOfLife className="absolute inset-0 opacity-20" seed="login-bg" slow />
+        <div className="relative flex flex-col items-center gap-6 text-center max-w-sm w-full">
           <div>
             <h1 className="text-xl font-bold uppercase tracking-wider">Your Credentials</h1>
             <p className="text-[10px] text-muted-foreground mt-2">
@@ -107,7 +111,7 @@ export default function LoginPage() {
             </div>
             <div>
               <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Password</p>
-              <p className="text-lg font-bold font-mono mt-0.5">{generatedCreds.password}</p>
+              <p className="text-lg font-bold mt-0.5">{generatedCreds.password}</p>
             </div>
           </div>
 
@@ -121,11 +125,10 @@ export default function LoginPage() {
 
   // Login form
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6">
-      <div className="flex flex-col items-center gap-6 text-center max-w-sm w-full">
-        <div>
-          <h1 className="text-xl font-bold uppercase tracking-wider">Log In</h1>
-        </div>
+    <div className="relative flex min-h-screen flex-col items-center justify-center px-6">
+      <GameOfLife className="absolute inset-0 opacity-20" seed="login-bg" slow />
+      <div className="relative flex flex-col items-center gap-6 text-center max-w-sm w-full">
+        <h1 className="text-xl font-bold uppercase tracking-wider">Log In</h1>
 
         <form onSubmit={handleLogin} className="w-full space-y-3">
           <Input

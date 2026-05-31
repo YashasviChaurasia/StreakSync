@@ -7,6 +7,8 @@ import { useChallengeDetail } from "@/lib/hooks/use-store";
 import { useAuth } from "@/lib/auth/supabase-provider";
 import {
   createTask,
+  updateTask,
+  deleteTask,
   getProgress,
   getTaskProgress,
   getUserProgressForChallenge,
@@ -176,7 +178,20 @@ export default function ChallengeDetailPage() {
               </p>
               <div className="space-y-1">
                 {todayTasks.map((item) => (
-                  <TaskRow key={item.task.id} item={item} onUpdate={refresh} />
+                  <div key={item.task.id} className="flex items-center gap-1">
+                    <div className="flex-1">
+                      <TaskRow item={item} onUpdate={refresh} />
+                    </div>
+                    {isOwner && (
+                      <button
+                        onClick={() => { deleteTask(item.task.id); refresh(); }}
+                        className="text-[9px] text-muted-foreground hover:text-destructive px-1 shrink-0"
+                        title="Delete task"
+                      >
+                        x
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
               {isOwner && (

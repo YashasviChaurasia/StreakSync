@@ -195,6 +195,22 @@ export function createTask(task: Task): Task {
   return task;
 }
 
+export function updateTask(taskId: string, updates: Partial<Pick<Task, "title" | "recurrence" | "target_count" | "sort_order">>) {
+  const store = getStore();
+  const idx = store.tasks.findIndex((t) => t.id === taskId);
+  if (idx >= 0) {
+    store.tasks[idx] = { ...store.tasks[idx], ...updates };
+    saveStore(store);
+  }
+}
+
+export function deleteTask(taskId: string) {
+  const store = getStore();
+  store.tasks = store.tasks.filter((t) => t.id !== taskId);
+  store.progress = store.progress.filter((p) => p.task_id !== taskId);
+  saveStore(store);
+}
+
 // Progress
 export function getProgress(taskId: string, userId: string, date: string): ProgressEntry | undefined {
   return getStore().progress.find(

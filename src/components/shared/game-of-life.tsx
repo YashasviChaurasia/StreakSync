@@ -5,6 +5,7 @@ import { useRef, useEffect } from "react";
 interface GameOfLifeProps {
   className?: string;
   seed?: string;
+  slow?: boolean;
 }
 
 function seededRandom(seed: string) {
@@ -26,7 +27,7 @@ export function injectCell() {
   pendingInjections++;
 }
 
-export function GameOfLife({ className, seed = "default" }: GameOfLifeProps) {
+export function GameOfLife({ className, seed = "default", slow = false }: GameOfLifeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
 
@@ -98,7 +99,8 @@ export function GameOfLife({ className, seed = "default" }: GameOfLifeProps) {
 
     const draw = () => {
       frameCount++;
-      if (frameCount % 4 === 0) step();
+      const interval = slow ? 12 : 4;
+      if (frameCount % interval === 0) step();
 
       ctx.fillStyle = "#0d0d0d";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
