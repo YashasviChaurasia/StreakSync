@@ -33,21 +33,32 @@ function mapUser(supabaseUser: SupabaseUser): AppUser {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  const fetchUser = async () => {
-    const { data: { user: sUser } } = await supabase.auth.getUser();
-    const appUser = sUser ? mapUser(sUser) : null;
-    if (appUser) registerUser(appUser);
-    setUser(appUser);
-    setLoading(false);
-  };
 
   useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchUser = async () => {
+      try {
+        const { data: { user: sUser } } = await supabase.auth.getUser();
+        const appUser = sUser ? mapUser(sUser) : null;
+        if (appUser) registerUser(appUser);
+        setUser(appUser);
+      } catch {
+        setUser(null);
+      }
+      setLoading(false);
+    };
+
     fetchUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      setUser(session?.user ? mapUser(session.user) : null);
+      const appUser = session?.user ? mapUser(session.user) : null;
+      if (appUser) registerUser(appUser);
+      setUser(appUser);
       setLoading(false);
     });
 
@@ -55,12 +66,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const supabase = createClient();
+    if (supabase) await supabase.auth.signOut();
     setUser(null);
   };
 
+  const refresh = async () => {
+    const supabase = createClient();
+    if (!supabase) return;
+    const { data: { user: sUser } } = await supabase.auth.getUser();
+    const appUser = sUser ? mapUser(sUser) : null;
+    if (appUser) registerUser(appUser);
+    setUser(appUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, refresh: fetchUser, signOut }}>
+    <AuthContext.Provider value={{ user, loading, refresh, signOut }}>
       {children}
     </AuthContext.Provider>
   );
