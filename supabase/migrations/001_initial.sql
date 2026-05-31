@@ -32,6 +32,7 @@ CREATE TABLE public.memberships (
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   challenge_id UUID NOT NULL REFERENCES public.challenges(id) ON DELETE CASCADE,
   role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'member')),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'pending')),
   joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, challenge_id)
 );
@@ -103,8 +104,8 @@ CREATE TRIGGER on_auth_user_created
 CREATE OR REPLACE FUNCTION public.handle_new_challenge()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.memberships (user_id, challenge_id, role)
-  VALUES (NEW.owner_id, NEW.id, 'owner');
+  INSERT INTO public.memberships (user_id, challenge_id, role, status)
+  VALUES (NEW.owner_id, NEW.id, 'owner', 'active');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
