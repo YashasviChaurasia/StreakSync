@@ -1,50 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/supabase-provider";
-import {
-  getChallengeByInviteCode,
-  joinChallenge,
-  markInviteUsed,
-  isMember,
-  hasPendingRequest,
-} from "@/lib/store/local-store";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { differenceInDays } from "date-fns";
+import type { Challenge } from "@/lib/types";
 
 export default function JoinPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const [requested, setRequested] = useState(false);
-  const challenge = getChallengeByInviteCode(params.code as string);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<"idle" | "member" | "pending" | "requested">("idle");
 
-  if (!challenge) {
+  useEffect(() => {
+    (async () => {
+      const c = await db.getChallengeByInviteCode(params.code as string);
+      setChallenge(c);
+      if (c && user) {
+        const member = await db.isMember(user.id, c.id);
+        if (member) { setStatus("member"); }
+        else {
+          const pending = await db.hasPendingRequest(user.id, c.id);
+          if (pending) setStatus("pending");
+        }
+      }
+      setLoading(false);
+    })();
+  }, [params.code, user]);
+
+  if (loading) {
     return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          Invalid or expired invite link.
-        </p>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
-  const alreadyMember = user ? isMember(user.id, challenge.id) : false;
-  const alreadyPending = user ? hasPendingRequest(user.id, challenge.id) : false;
+  if (!challenge) {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+        <p className="text-sm text-muted-foreground">Invalid or expired invite link.</p>
+      </div>
+    );
+  }
+
   const daysLeft = Math.max(0, differenceInDays(new Date(challenge.end_date), new Date()));
   const isPrivate = challenge.visibility === "private";
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!user) return;
+    await db.joinChallenge(user.id, challenge.id, !isPrivate);
     if (isPrivate) {
-      // Private: request to join (pending approval by owner)
-      joinChallenge(user.id, challenge.id, false);
-      markInviteUsed(challenge.id);
-      setRequested(true);
+      setStatus("requested");
     } else {
-      // Public: instant join
-      joinChallenge(user.id, challenge.id, true);
       router.push(`/challenges/${challenge.id}`);
     }
   };
@@ -58,22 +70,14 @@ export default function JoinPage() {
           {daysLeft}d left · {challenge.event_type} · {challenge.visibility}
         </p>
 
-        {alreadyMember ? (
-          <Button
-            onClick={() => router.push(`/challenges/${challenge.id}`)}
-            className="mt-8 w-full h-10 text-xs uppercase tracking-wider"
-          >
+        {status === "member" ? (
+          <Button onClick={() => router.push(`/challenges/${challenge.id}`)} className="mt-8 w-full h-10 text-xs uppercase tracking-wider">
             Open
           </Button>
-        ) : alreadyPending || requested ? (
-          <p className="mt-8 text-xs text-muted-foreground">
-            Request sent. Waiting for approval.
-          </p>
+        ) : status === "pending" || status === "requested" ? (
+          <p className="mt-8 text-xs text-muted-foreground">Request sent. Waiting for approval.</p>
         ) : (
-          <Button
-            onClick={handleJoin}
-            className="mt-8 w-full h-10 text-xs uppercase tracking-wider"
-          >
+          <Button onClick={handleJoin} className="mt-8 w-full h-10 text-xs uppercase tracking-wider">
             {isPrivate ? "Request to Join" : "Join"}
           </Button>
         )}

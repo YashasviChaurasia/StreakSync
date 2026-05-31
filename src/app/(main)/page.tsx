@@ -1,70 +1,107 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth/supabase-provider";
 import { useUserChallenges } from "@/lib/hooks/use-store";
 import { Heatmap } from "@/components/challenge/heatmap";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Star } from "lucide-react";
 import Link from "next/link";
-import * as store from "@/lib/store/local-store";
+import * as db from "@/lib/db";
 import { calculateStreak } from "@/lib/utils/streaks";
 import { cn } from "@/lib/utils";
 import { GameOfLife } from "@/components/shared/game-of-life";
+
+const STARRED_KEY = "streaksync_starred_v2";
+
+function getSavedStar(userId: string): string | null {
+  if (typeof window === "undefined") return null;
+  const data = localStorage.getItem(STARRED_KEY);
+  if (!data) return null;
+  const map = JSON.parse(data);
+  return map[userId] || null;
+}
+
+function saveStar(userId: string, challengeId: string | null) {
+  const data = localStorage.getItem(STARRED_KEY);
+  const map = data ? JSON.parse(data) : {};
+  if (challengeId) { map[userId] = challengeId; } else { delete map[userId]; }
+  localStorage.setItem(STARRED_KEY, JSON.stringify(map));
+}
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const { challenges } = useUserChallenges();
   const [starredId, setStarredId] = useState<string | null>(null);
+  const [starredHeatmap, setStarredHeatmap] = useState<Map<string, number>>(new Map());
+  const [maxStreak, setMaxStreak] = useState(0);
+  const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
 
   const today = new Date().toISOString().split("T")[0];
   const activeChallenges = challenges.filter((c) => c.end_date >= today);
 
+  // Determine starred challenge
   useEffect(() => {
     if (!user) return;
-    const saved = store.getStarredChallengeId(user.id);
+    const saved = getSavedStar(user.id);
     if (saved && activeChallenges.some((c) => c.id === saved)) {
       setStarredId(saved);
     } else if (activeChallenges.length > 0) {
-      // Default to first (or only) challenge
       setStarredId(activeChallenges[0].id);
     }
   }, [user, activeChallenges.length]);
 
+  // Fetch heatmap for starred challenge
+  useEffect(() => {
+    if (!user || !starredId) { setStarredHeatmap(new Map()); return; }
+    (async () => {
+      const tasks = await db.getChallengeTasks(starredId);
+      const progress = await db.getUserProgressForChallenge(starredId, user.id);
+      const taskCount = tasks.length || 1;
+      const map = new Map<string, number>();
+      for (const entry of progress) {
+        if (!entry.completed) continue;
+        const current = map.get(entry.date) || 0;
+        map.set(entry.date, (current + 1) / taskCount);
+      }
+      setStarredHeatmap(map);
+    })();
+  }, [user, starredId]);
+
+  // Fetch max streak
+  useEffect(() => {
+    if (!user || challenges.length === 0) { setMaxStreak(0); return; }
+    (async () => {
+      let max = 0;
+      for (const c of challenges) {
+        const tasks = await db.getChallengeTasks(c.id);
+        for (const task of tasks) {
+          const progress = await db.getTaskProgress(task.id, user.id);
+          max = Math.max(max, calculateStreak(progress, task));
+        }
+      }
+      setMaxStreak(max);
+    })();
+  }, [user, challenges]);
+
+  // Fetch member counts
+  useEffect(() => {
+    (async () => {
+      const counts: Record<string, number> = {};
+      for (const c of activeChallenges) {
+        const members = await db.getChallengeMembers(c.id);
+        counts[c.id] = members.length;
+      }
+      setMemberCounts(counts);
+    })();
+  }, [activeChallenges.length]);
+
   const handleStar = (challengeId: string) => {
     if (!user) return;
     const newId = starredId === challengeId ? null : challengeId;
-    store.setStarredChallenge(user.id, newId);
+    saveStar(user.id, newId);
     setStarredId(newId);
   };
-
-
-  const starredHeatmap = useMemo(() => {
-    if (!user || !starredId) return new Map<string, number>();
-    const tasks = store.getChallengeTasks(starredId);
-    const progress = store.getUserProgressForChallenge(starredId, user.id);
-    const taskCount = tasks.length || 1;
-    const map = new Map<string, number>();
-    for (const entry of progress) {
-      if (!entry.completed) continue;
-      const current = map.get(entry.date) || 0;
-      map.set(entry.date, (current + 1) / taskCount);
-    }
-    return map;
-  }, [user, starredId]);
-
-  const maxStreak = useMemo(() => {
-    if (!user) return 0;
-    let max = 0;
-    for (const c of challenges) {
-      const tasks = store.getChallengeTasks(c.id);
-      for (const task of tasks) {
-        const progress = store.getTaskProgress(task.id, user.id);
-        max = Math.max(max, calculateStreak(progress, task));
-      }
-    }
-    return max;
-  }, [user, challenges]);
 
   const starredChallenge = activeChallenges.find((c) => c.id === starredId);
 
@@ -116,7 +153,6 @@ export default function Dashboard() {
           {activeChallenges.length > 0 ? (
             <div className="space-y-1">
               {activeChallenges.map((c) => {
-                const members = store.getChallengeMembers(c.id);
                 const isStarred = starredId === c.id;
                 return (
                   <div key={c.id} className="flex items-center border border-border bg-card">
@@ -126,7 +162,7 @@ export default function Dashboard() {
                     >
                       <span className="text-sm truncate">{c.title}</span>
                       <span className="font-mono text-[9px] text-muted-foreground ml-2 shrink-0">
-                        {members.length}
+                        {memberCounts[c.id] || 0}
                       </span>
                     </Link>
                     <button

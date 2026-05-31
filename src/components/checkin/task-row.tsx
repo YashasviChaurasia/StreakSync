@@ -19,9 +19,9 @@ export function TaskRow({ item, onUpdate, showChallenge = false }: TaskRowProps)
 
   const isCompleted = progress?.completed ?? false;
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
     if (!isCompleted) injectCell();
-    toggleComplete(task.id);
+    await toggleComplete(task.id);
     onUpdate();
   };
 

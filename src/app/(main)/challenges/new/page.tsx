@@ -4,14 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, addDays } from "date-fns";
 import { useAuth } from "@/lib/auth/supabase-provider";
-import { createChallenge } from "@/lib/store/local-store";
+import * as db from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Eye, Users, Lock, Globe } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { Challenge } from "@/lib/types";
 
 export default function NewChallengePage() {
   const { user } = useAuth();
@@ -22,12 +21,11 @@ export default function NewChallengePage() {
   const [visibility, setVisibility] = useState<"private" | "public">("private");
   const [eventType, setEventType] = useState<"join" | "watch">("join");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !title.trim()) return;
 
-    const challenge: Challenge = {
-      id: `challenge-${Date.now()}`,
+    const result = await db.createChallenge({
       title: title.trim(),
       description: description.trim() || null,
       owner_id: user.id,
@@ -35,14 +33,9 @@ export default function NewChallengePage() {
       end_date: format(addDays(new Date(), duration), "yyyy-MM-dd"),
       visibility,
       event_type: eventType,
-      theme: { gradient: "" },
-      invite_code: Math.random().toString(36).slice(2, 8),
-      invite_used: false,
-      created_at: new Date().toISOString(),
-    };
+    });
 
-    createChallenge(challenge);
-    router.push(`/challenges/${challenge.id}`);
+    if (result) router.push(`/challenges/${result.id}`);
   };
 
   return (

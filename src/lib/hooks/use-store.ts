@@ -3,71 +3,41 @@
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth/supabase-provider";
-import * as store from "@/lib/store/local-store";
+import * as db from "@/lib/db";
 import { calculateStreak } from "@/lib/utils/streaks";
-import type { Challenge, Task, ProgressEntry, TodayTask } from "@/lib/types";
+import type { Challenge, Task, ProgressEntry, TodayTask, User, Membership } from "@/lib/types";
 
 export function useUserChallenges() {
   const { user } = useAuth();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
 
-  useEffect(() => {
-    if (user) {
-      setChallenges(store.getUserChallenges(user.id));
-    }
-  }, [user]);
-
-  const refresh = useCallback(() => {
-    if (user) setChallenges(store.getUserChallenges(user.id));
-  }, [user]);
-
-  return { challenges, refresh };
-}
-
-export function useTodayTasks() {
-  const { user } = useAuth();
-  const [tasks, setTasks] = useState<TodayTask[]>([]);
-  const today = format(new Date(), "yyyy-MM-dd");
-
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     if (!user) return;
-    const challenges = store.getUserChallenges(user.id);
-    const todayTasks: TodayTask[] = [];
-
-    for (const challenge of challenges) {
-      // Only active challenges
-      if (challenge.start_date > today || challenge.end_date < today) continue;
-
-      const tasks = store.getChallengeTasks(challenge.id);
-      for (const task of tasks) {
-        const progress = store.getProgress(task.id, user.id, today);
-        const allProgress = store.getTaskProgress(task.id, user.id);
-        const streak = calculateStreak(allProgress, task);
-        todayTasks.push({ task, challenge, progress: progress || null, streak });
-      }
-    }
-
-    setTasks(todayTasks);
-  }, [user, today]);
+    const c = await db.getUserChallenges(user.id);
+    setChallenges(c);
+  }, [user]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return { tasks, refresh };
+  return { challenges, refresh };
 }
 
 export function useChallengeDetail(challengeId: string) {
-  const { user } = useAuth();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [members, setMembers] = useState<ReturnType<typeof store.getChallengeMembers>>([]);
+  const [members, setMembers] = useState<(Membership & { user: User })[]>([]);
 
-  const refresh = useCallback(() => {
-    const c = store.getChallenge(challengeId);
+  const refresh = useCallback(async () => {
+    const [c, t, m] = await Promise.all([
+      db.getChallenge(challengeId),
+      db.getChallengeTasks(challengeId),
+      db.getChallengeMembers(challengeId),
+    ]);
     if (c) setChallenge(c);
-    setTasks(store.getChallengeTasks(challengeId));
-    setMembers(store.getChallengeMembers(challengeId));
+    setTasks(t);
+    setMembers(m);
   }, [challengeId]);
 
   useEffect(() => {
@@ -82,50 +52,59 @@ export function useCheckIn() {
   const today = format(new Date(), "yyyy-MM-dd");
 
   const toggleComplete = useCallback(
-    (taskId: string) => {
+    async (taskId: string) => {
       if (!user) return;
-      const existing = store.getProgress(taskId, user.id, today);
-      const entry: ProgressEntry = existing
-        ? { ...existing, completed: !existing.completed, count: existing.completed ? 0 : 1 }
-        : {
-            id: `prog-${Date.now()}`,
-            task_id: taskId,
-            user_id: user.id,
-            date: today,
-            completed: true,
-            count: 1,
-            note: null,
-            created_at: new Date().toISOString(),
-          };
-      store.upsertProgress(entry);
-      return entry;
+      const existing = await db.getProgress(taskId, user.id, today);
+      if (existing) {
+        await db.upsertProgress({
+          task_id: taskId,
+          user_id: user.id,
+          date: today,
+          completed: !existing.completed,
+          count: existing.completed ? 0 : 1,
+        });
+      } else {
+        await db.upsertProgress({
+          task_id: taskId,
+          user_id: user.id,
+          date: today,
+          completed: true,
+          count: 1,
+        });
+      }
     },
     [user, today]
   );
 
-  const incrementCount = useCallback(
-    (taskId: string, delta: number) => {
-      if (!user) return;
-      const existing = store.getProgress(taskId, user.id, today);
-      const currentCount = existing?.count ?? 0;
-      const newCount = Math.max(0, currentCount + delta);
-      const entry: ProgressEntry = existing
-        ? { ...existing, count: newCount, completed: newCount > 0 }
-        : {
-            id: `prog-${Date.now()}`,
-            task_id: taskId,
-            user_id: user.id,
-            date: today,
-            completed: newCount > 0,
-            count: newCount,
-            note: null,
-            created_at: new Date().toISOString(),
-          };
-      store.upsertProgress(entry);
-      return entry;
-    },
-    [user, today]
-  );
+  return { toggleComplete };
+}
 
-  return { toggleComplete, incrementCount };
+export function useTodayTasks(challengeId: string) {
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<TodayTask[]>([]);
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    const challenge = await db.getChallenge(challengeId);
+    if (!challenge) return;
+
+    const allTasks = await db.getChallengeTasks(challengeId);
+    const todayTasks: TodayTask[] = [];
+
+    for (const task of allTasks) {
+      const progress = await db.getProgress(task.id, user.id, today);
+      const allProgress = await db.getTaskProgress(task.id, user.id);
+      const streak = calculateStreak(allProgress, task);
+      todayTasks.push({ task, challenge, progress, streak });
+    }
+
+    setTasks(todayTasks);
+  }, [user, challengeId, today]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { tasks, refresh };
 }

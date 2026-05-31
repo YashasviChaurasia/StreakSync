@@ -1,23 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { format, subDays, addDays } from "date-fns";
-import { useChallengeDetail } from "@/lib/hooks/use-store";
+import { useChallengeDetail, useCheckIn } from "@/lib/hooks/use-store";
 import { useAuth } from "@/lib/auth/supabase-provider";
-import {
-  createTask,
-  updateTask,
-  deleteTask,
-  getProgress,
-  getTaskProgress,
-  getUserProgressForChallenge,
-  getWallNotes,
-  postWallNote,
-  getPendingRequests,
-  approveRequest,
-  denyRequest,
-} from "@/lib/store/local-store";
+import * as db from "@/lib/db";
 import { calculateStreak } from "@/lib/utils/streaks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -37,6 +25,7 @@ export default function ChallengeDetailPage() {
   const params = useParams();
   const { user } = useAuth();
   const { challenge, tasks, members, refresh } = useChallengeDetail(params.id as string);
+  const { toggleComplete } = useCheckIn();
   const [tab, setTab] = useState<Tab>("details");
   const [newTask, setNewTask] = useState("");
   const [showAddTask, setShowAddTask] = useState(false);
@@ -45,18 +34,55 @@ export default function ChallengeDetailPage() {
   const [editDesc, setEditDesc] = useState("");
   const [wallDate, setWallDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [noteText, setNoteText] = useState("");
-  const [wallRefresh, setWallRefresh] = useState(0);
+  const [wallNotes, setWallNotes] = useState<any[]>([]);
+  const [todayTasks, setTodayTasks] = useState<TodayTask[]>([]);
+  const [myHeatmap, setMyHeatmap] = useState<Map<string, number>>(new Map());
   const today = format(new Date(), "yyyy-MM-dd");
 
-  const wallNotes = useMemo(() => {
-    if (!challenge) return [];
-    return getWallNotes(challenge.id, wallDate);
-  }, [challenge, wallDate, wallRefresh]);
+  // Fetch today's tasks with progress
+  const refreshTasks = useCallback(async () => {
+    if (!user || !challenge) return;
+    const items: TodayTask[] = [];
+    for (const task of tasks) {
+      const progress = await db.getProgress(task.id, user.id, today);
+      const allProgress = await db.getTaskProgress(task.id, user.id);
+      const streak = calculateStreak(allProgress, task);
+      items.push({ task, challenge, progress, streak });
+    }
+    setTodayTasks(items);
+  }, [user, challenge, tasks, today]);
+
+  useEffect(() => { refreshTasks(); }, [refreshTasks]);
+
+  // Fetch heatmap
+  useEffect(() => {
+    if (!user || !challenge) return;
+    (async () => {
+      const progress = await db.getUserProgressForChallenge(challenge.id, user.id);
+      const taskCount = tasks.length || 1;
+      const map = new Map<string, number>();
+      for (const entry of progress) {
+        if (!entry.completed) continue;
+        const current = map.get(entry.date) || 0;
+        map.set(entry.date, (current + 1) / taskCount);
+      }
+      setMyHeatmap(map);
+    })();
+  }, [user, challenge, tasks]);
+
+  // Fetch wall notes
+  useEffect(() => {
+    if (!challenge) return;
+    (async () => {
+      const notes = await db.getWallNotes(challenge.id, wallDate);
+      setWallNotes(notes);
+    })();
+  }, [challenge, wallDate]);
 
   if (!challenge) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-muted-foreground">Not found</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
@@ -64,29 +90,30 @@ export default function ChallengeDetailPage() {
   const isOwner = challenge.owner_id === user?.id;
   const isJoinMode = challenge.event_type === "join";
 
-  const todayTasks: TodayTask[] = tasks.map((task) => {
-    const progress = user ? getProgress(task.id, user.id, today) || null : null;
-    const allProgress = user ? getTaskProgress(task.id, user.id) : [];
-    const streak = calculateStreak(allProgress, task);
-    return { task, challenge, progress, streak };
-  });
-
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.trim()) return;
-    createTask({
-      id: `task-${Date.now()}`,
+    await db.createTask({
       challenge_id: challenge.id,
       title: newTask.trim(),
       recurrence: "daily",
       recurrence_days: null,
       target_count: 1,
       sort_order: tasks.length,
-      created_at: new Date().toISOString(),
     });
     setNewTask("");
     setShowAddTask(false);
     refresh();
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    await db.deleteTask(taskId);
+    refresh();
+  };
+
+  const handleToggle = async (taskId: string) => {
+    await toggleComplete(taskId);
+    refreshTasks();
   };
 
   const handleCopyInvite = () => {
@@ -94,12 +121,19 @@ export default function ChallengeDetailPage() {
     toast.success("Link copied");
   };
 
-  const handlePostNote = () => {
+  const handlePostNote = async () => {
     if (!noteText.trim() || !user) return;
-    postWallNote(challenge.id, user.id, wallDate, noteText.trim());
+    await db.postWallNote(challenge.id, user.id, wallDate, noteText.trim());
     setNoteText("");
-    setWallRefresh((r) => r + 1);
+    const notes = await db.getWallNotes(challenge.id, wallDate);
+    setWallNotes(notes);
     toast.success("Posted");
+  };
+
+  const handleSaveEdit = async () => {
+    await db.updateChallenge(challenge.id, { title: editTitle, description: editDesc || null });
+    setShowEdit(false);
+    refresh();
   };
 
   const TABS: { key: Tab; label: string }[] = [
@@ -117,9 +151,9 @@ export default function ChallengeDetailPage() {
         </Link>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl truncate">{challenge.title}</h1>
-          <p className="font-mono text-[9px] text-muted-foreground mt-0.5">
-            {members.length} {members.length === 1 ? "member" : "members"} · {challenge.event_type}
-          </p>
+          {challenge.description && (
+            <p className="text-xs text-muted-foreground mt-0.5">{challenge.description}</p>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           {isOwner && (
@@ -141,7 +175,7 @@ export default function ChallengeDetailPage() {
         <div className="mb-6 p-3 border border-border bg-card space-y-2">
           <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Name" className="h-8 text-sm border-border" />
           <Textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description" className="text-sm border-border min-h-[60px] resize-none" rows={3} />
-          <button onClick={() => setShowEdit(false)} className="font-mono text-[10px] text-accent hover:underline">done</button>
+          <button onClick={handleSaveEdit} className="text-[9px] text-green-500 hover:underline">save</button>
         </div>
       )}
 
@@ -152,7 +186,7 @@ export default function ChallengeDetailPage() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={cn(
-              "pb-2 font-mono text-[10px] uppercase tracking-wider transition-colors border-b-2 -mb-px",
+              "pb-2 text-[10px] uppercase tracking-wider transition-colors border-b-2 -mb-px",
               tab === t.key
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -166,27 +200,25 @@ export default function ChallengeDetailPage() {
       {/* Details tab */}
       {tab === "details" && (
         <div>
-          {challenge.description && (
-            <p className="text-sm text-foreground/80 mb-6">{challenge.description}</p>
-          )}
+          {/* Heatmap */}
+          <section className="mb-6">
+            <Heatmap data={myHeatmap} />
+          </section>
 
           {/* Tasks */}
           {(isJoinMode || isOwner) && (
             <section>
-              <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider mb-2">
-                Tasks
-              </p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-2">Tasks</p>
               <div className="space-y-1">
                 {todayTasks.map((item) => (
                   <div key={item.task.id} className="flex items-center gap-1">
                     <div className="flex-1">
-                      <TaskRow item={item} onUpdate={refresh} />
+                      <TaskRow item={item} onUpdate={refreshTasks} />
                     </div>
                     {isOwner && (
                       <button
-                        onClick={() => { deleteTask(item.task.id); refresh(); }}
+                        onClick={() => handleDeleteTask(item.task.id)}
                         className="text-[9px] text-muted-foreground hover:text-destructive px-1 shrink-0"
-                        title="Delete task"
                       >
                         x
                       </button>
@@ -198,20 +230,11 @@ export default function ChallengeDetailPage() {
                 <>
                   {showAddTask ? (
                     <form onSubmit={handleAddTask} className="flex gap-2 mt-2">
-                      <Input
-                        placeholder="New task..."
-                        value={newTask}
-                        onChange={(e) => setNewTask(e.target.value)}
-                        className="h-8 text-sm flex-1 border-border"
-                        autoFocus
-                      />
-                      <button type="submit" className="font-mono text-[10px] text-accent">add</button>
+                      <Input placeholder="New task..." value={newTask} onChange={(e) => setNewTask(e.target.value)} className="h-8 text-sm flex-1 border-border" autoFocus />
+                      <button type="submit" className="text-[10px] text-green-500">add</button>
                     </form>
                   ) : (
-                    <button
-                      onClick={() => setShowAddTask(true)}
-                      className="flex items-center gap-1 mt-2 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    <button onClick={() => setShowAddTask(true)} className="flex items-center gap-1 mt-2 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
                       <Plus className="h-3 w-3" /> add task
                     </button>
                   )}
@@ -224,124 +247,38 @@ export default function ChallengeDetailPage() {
 
       {/* Participants tab */}
       {tab === "participants" && (
-        <div className="space-y-5">
-          {/* Pending requests — owner only */}
-          {isOwner && (() => {
-            const pending = getPendingRequests(challenge.id);
-            if (pending.length === 0) return null;
-            return (
-              <div className="p-3 border border-border bg-card mb-4">
-                <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-2">
-                  Pending requests ({pending.length})
-                </p>
-                <div className="space-y-2">
-                  {pending.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between py-1.5">
-                      <span className="text-xs">{p.user.name}</span>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => { approveRequest(p.id); refresh(); }}
-                          className="text-[9px] text-green-600 hover:underline"
-                        >
-                          approve
-                        </button>
-                        <button
-                          onClick={() => { denyRequest(p.id); refresh(); }}
-                          className="text-[9px] text-muted-foreground hover:underline"
-                        >
-                          deny
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-          {members.map((m) => {
-            const memberProgress = getUserProgressForChallenge(challenge.id, m.user_id);
-            const taskCount = tasks.length || 1;
-            const memberMap = new Map<string, number>();
-            for (const entry of memberProgress) {
-              if (!entry.completed) continue;
-              const current = memberMap.get(entry.date) || 0;
-              memberMap.set(entry.date, (current + 1) / taskCount);
-            }
-            const memberStreak = tasks.reduce((max, task) => {
-              const prog = getTaskProgress(task.id, m.user_id);
-              return Math.max(max, calculateStreak(prog, task));
-            }, 0);
-
-            return (
-              <div key={m.id} className="p-3 border border-border bg-card">
-                <div className="flex items-center gap-2 mb-3">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={m.user.avatar_url || undefined} />
-                    <AvatarFallback className="text-[9px]">{m.user.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs font-medium flex-1">{m.user.name}</span>
-                  <StreakFlame count={memberStreak} size="sm" />
-                  {m.role === "owner" && (
-                    <span className="font-mono text-[8px] text-muted-foreground">owner</span>
-                  )}
-                </div>
-                <Heatmap data={memberMap} />
-              </div>
-            );
-          })}
-        </div>
+        <ParticipantsTab challengeId={challenge.id} members={members} tasks={tasks} isOwner={isOwner} onRefresh={refresh} />
       )}
 
       {/* Wall tab */}
       {tab === "wall" && (
         <div>
-          {/* Date navigator */}
           <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => setWallDate(format(subDays(new Date(wallDate), 1), "yyyy-MM-dd"))}
-              className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <button onClick={() => setWallDate(format(subDays(new Date(wallDate), 1), "yyyy-MM-dd"))} className="p-1 text-muted-foreground hover:text-foreground">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="font-mono text-[10px] text-muted-foreground">
+            <span className="text-[10px] text-muted-foreground">
               {wallDate === today ? "today" : format(new Date(wallDate), "MMM d, yyyy")}
             </span>
             <button
-              onClick={() => {
-                const next = format(addDays(new Date(wallDate), 1), "yyyy-MM-dd");
-                if (next <= today) setWallDate(next);
-              }}
+              onClick={() => { const next = format(addDays(new Date(wallDate), 1), "yyyy-MM-dd"); if (next <= today) setWallDate(next); }}
               disabled={wallDate >= today}
-              className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30"
+              className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Post input (only for today) */}
           {wallDate === today && (
             <div className="flex gap-2 mb-4">
-              <Input
-                placeholder="Write something..."
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handlePostNote()}
-                className="h-8 text-sm flex-1 border-border"
-              />
-              <button
-                onClick={handlePostNote}
-                disabled={!noteText.trim()}
-                className="font-mono text-[10px] text-accent disabled:text-muted-foreground"
-              >
-                post
-              </button>
+              <Input placeholder="Write something..." value={noteText} onChange={(e) => setNoteText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handlePostNote()} className="h-8 text-sm flex-1 border-border" />
+              <button onClick={handlePostNote} disabled={!noteText.trim()} className="text-[10px] text-green-500 disabled:text-muted-foreground">post</button>
             </div>
           )}
 
-          {/* Notes */}
           {wallNotes.length > 0 ? (
             <div className="space-y-3">
-              {wallNotes.map((n) => (
+              {wallNotes.map((n: any) => (
                 <div key={n.id} className="py-2.5 border-b border-border last:border-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Avatar className="h-4 w-4">
@@ -361,6 +298,103 @@ export default function ChallengeDetailPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// Separate component for participants to handle async data
+function ParticipantsTab({ challengeId, members, tasks, isOwner, onRefresh }: {
+  challengeId: string;
+  members: any[];
+  tasks: Task[];
+  isOwner: boolean;
+  onRefresh: () => void;
+}) {
+  const [pending, setPending] = useState<any[]>([]);
+  const [memberHeatmaps, setMemberHeatmaps] = useState<Map<string, Map<string, number>>>(new Map());
+  const [memberStreaks, setMemberStreaks] = useState<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    if (isOwner) {
+      db.getPendingRequests(challengeId).then(setPending);
+    }
+  }, [challengeId, isOwner]);
+
+  useEffect(() => {
+    (async () => {
+      const heatmaps = new Map<string, Map<string, number>>();
+      const streaks = new Map<string, number>();
+      const taskCount = tasks.length || 1;
+
+      for (const m of members) {
+        const progress = await db.getUserProgressForChallenge(challengeId, m.user_id);
+        const map = new Map<string, number>();
+        for (const entry of progress) {
+          if (!entry.completed) continue;
+          const current = map.get(entry.date) || 0;
+          map.set(entry.date, (current + 1) / taskCount);
+        }
+        heatmaps.set(m.user_id, map);
+
+        let maxStreak = 0;
+        for (const task of tasks) {
+          const taskProg = await db.getTaskProgress(task.id, m.user_id);
+          maxStreak = Math.max(maxStreak, calculateStreak(taskProg, task));
+        }
+        streaks.set(m.user_id, maxStreak);
+      }
+
+      setMemberHeatmaps(heatmaps);
+      setMemberStreaks(streaks);
+    })();
+  }, [challengeId, members, tasks]);
+
+  const handleApprove = async (id: string) => {
+    await db.approveRequest(id);
+    setPending((p) => p.filter((r) => r.id !== id));
+    onRefresh();
+  };
+
+  const handleDeny = async (id: string) => {
+    await db.denyRequest(id);
+    setPending((p) => p.filter((r) => r.id !== id));
+  };
+
+  return (
+    <div className="space-y-5">
+      {isOwner && pending.length > 0 && (
+        <div className="p-3 border border-border bg-card mb-4">
+          <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-2">
+            Pending ({pending.length})
+          </p>
+          <div className="space-y-2">
+            {pending.map((p: any) => (
+              <div key={p.id} className="flex items-center justify-between py-1.5">
+                <span className="text-xs">{p.user?.name}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => handleApprove(p.id)} className="text-[9px] text-green-500 hover:underline">approve</button>
+                  <button onClick={() => handleDeny(p.id)} className="text-[9px] text-muted-foreground hover:underline">deny</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {members.map((m: any) => (
+        <div key={m.id} className="p-3 border border-border bg-card">
+          <div className="flex items-center gap-2 mb-3">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={m.user?.avatar_url || undefined} />
+              <AvatarFallback className="text-[9px]">{m.user?.name?.[0]}</AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-medium flex-1">{m.user?.name}</span>
+            <StreakFlame count={memberStreaks.get(m.user_id) || 0} size="sm" />
+            {m.role === "owner" && <span className="text-[8px] text-muted-foreground">owner</span>}
+          </div>
+          <Heatmap data={memberHeatmaps.get(m.user_id) || new Map()} />
+        </div>
+      ))}
     </div>
   );
 }
