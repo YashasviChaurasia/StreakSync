@@ -75,7 +75,12 @@ export default function JoinPage() {
             Open
           </Button>
         ) : status === "pending" || status === "requested" ? (
-          <p className="mt-8 text-xs text-muted-foreground">Request sent. Waiting for approval.</p>
+          <div className="mt-8 space-y-3">
+            <p className="text-xs text-muted-foreground">Request sent. Waiting for approval.</p>
+            <Button variant="outline" onClick={() => router.push("/")} className="w-full h-9 text-[10px] uppercase tracking-wider">
+              Back to dashboard
+            </Button>
+          </div>
         ) : (
           <Button onClick={handleJoin} className="mt-8 w-full h-10 text-xs uppercase tracking-wider">
             {isPrivate ? "Request to Join" : "Join"}

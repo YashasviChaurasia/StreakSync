@@ -137,11 +137,23 @@ export async function hasPendingRequest(userId: string, challengeId: string): Pr
 }
 
 export async function approveRequest(membershipId: string) {
-  await getSupabase().from("memberships").update({ status: "active" }).eq("id", membershipId);
+  const { error } = await getSupabase().from("memberships").update({ status: "active" }).eq("id", membershipId);
+  if (error) console.error("approveRequest error:", error.message);
 }
 
 export async function denyRequest(membershipId: string) {
-  await getSupabase().from("memberships").delete().eq("id", membershipId);
+  const { error } = await getSupabase().from("memberships").delete().eq("id", membershipId);
+  if (error) console.error("denyRequest error:", error.message);
+}
+
+export async function getUserPendingChallenges(userId: string): Promise<{ challenge: Challenge; membership: Membership }[]> {
+  const { data } = await getSupabase()
+    .from("memberships")
+    .select("*, challenge:challenges(*)")
+    .eq("user_id", userId)
+    .eq("status", "pending");
+
+  return (data || []).map((m: any) => ({ challenge: m.challenge, membership: m }));
 }
 
 // ─── Tasks ────────────────────────────────────────────

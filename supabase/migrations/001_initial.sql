@@ -135,8 +135,16 @@ CREATE POLICY "Challenges editable" ON public.challenges FOR UPDATE TO authentic
 -- Memberships
 CREATE POLICY "Memberships viewable" ON public.memberships FOR SELECT TO authenticated
   USING (challenge_id IN (SELECT challenge_id FROM public.memberships WHERE user_id = auth.uid()));
-CREATE POLICY "Users can join" ON public.memberships FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
-CREATE POLICY "Users can leave" ON public.memberships FOR DELETE TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "Users can join" ON public.memberships FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Owner can update memberships" ON public.memberships FOR UPDATE TO authenticated
+  USING (
+    challenge_id IN (SELECT challenge_id FROM public.memberships WHERE user_id = auth.uid() AND role = 'owner')
+  );
+CREATE POLICY "Owner or self can delete memberships" ON public.memberships FOR DELETE TO authenticated
+  USING (
+    user_id = auth.uid() OR
+    challenge_id IN (SELECT challenge_id FROM public.memberships WHERE user_id = auth.uid() AND role = 'owner')
+  );
 
 -- Tasks
 CREATE POLICY "Tasks viewable" ON public.tasks FOR SELECT TO authenticated

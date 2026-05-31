@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [starredHeatmap, setStarredHeatmap] = useState<Map<string, number>>(new Map());
   const [maxStreak, setMaxStreak] = useState(0);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
+  const [pendingChallenges, setPendingChallenges] = useState<any[]>([]);
 
   const today = new Date().toISOString().split("T")[0];
   const activeChallenges = challenges.filter((c) => c.end_date >= today);
@@ -96,6 +97,12 @@ export default function Dashboard() {
     })();
   }, [activeChallenges.length]);
 
+  // Fetch pending challenges
+  useEffect(() => {
+    if (!user) return;
+    db.getUserPendingChallenges(user.id).then(setPendingChallenges);
+  }, [user]);
+
   const handleStar = (challengeId: string) => {
     if (!user) return;
     const newId = starredId === challengeId ? null : challengeId;
@@ -154,22 +161,28 @@ export default function Dashboard() {
             <div className="space-y-1">
               {activeChallenges.map((c) => {
                 const isStarred = starredId === c.id;
+                const isAdmin = c.owner_id === user?.id;
                 return (
                   <div key={c.id} className="flex items-center border border-border bg-card">
                     <Link
                       href={`/challenges/${c.id}`}
-                      className="flex-1 flex items-center justify-between py-2.5 px-3 hover:bg-secondary/50 transition-colors min-w-0"
+                      className="flex-1 flex items-center gap-2 py-2.5 px-3 hover:bg-secondary/50 transition-colors min-w-0"
                     >
                       <span className="text-sm truncate">{c.title}</span>
-                      <span className="font-mono text-[9px] text-muted-foreground ml-2 shrink-0">
+                      {isAdmin && (
+                        <span className="text-[8px] px-1 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 uppercase tracking-wider shrink-0">
+                          admin
+                        </span>
+                      )}
+                      <span className="font-mono text-[9px] text-muted-foreground ml-auto shrink-0">
                         {memberCounts[c.id] || 0}
                       </span>
                     </Link>
                     <button
                       onClick={() => handleStar(c.id)}
-                      className="px-2.5 py-2.5 border-l border-border text-muted-foreground hover:text-accent transition-colors"
+                      className="px-2.5 py-2.5 border-l border-border text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Star className={cn("h-3 w-3", isStarred && "fill-accent text-accent")} />
+                      <Star className={cn("h-3 w-3", isStarred && "fill-foreground text-foreground")} />
                     </button>
                   </div>
                 );
@@ -177,6 +190,19 @@ export default function Dashboard() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground py-4">No active challenges</p>
+          )}
+
+          {/* Pending requests */}
+          {pendingChallenges.length > 0 && (
+            <div className="mt-3 space-y-1">
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Pending</p>
+              {pendingChallenges.map((p: any) => (
+                <div key={p.membership.id} className="flex items-center py-2.5 px-3 border border-border bg-card opacity-60">
+                  <span className="text-sm truncate">{p.challenge?.title}</span>
+                  <span className="text-[8px] text-muted-foreground ml-auto">awaiting approval</span>
+                </div>
+              ))}
+            </div>
           )}
         </section>
 
