@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/banner.png" alt="StreakSync" width="100%" />
+</p>
+
 # StreakSync
 
 A minimal social accountability platform for shared challenges. Track streaks with friends — no email, no noise, just consistency.
