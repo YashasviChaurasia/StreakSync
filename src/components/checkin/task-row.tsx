@@ -1,0 +1,66 @@
+"use client";
+
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StreakFlame } from "@/components/shared/streak-flame";
+import { injectCell } from "@/components/shared/game-of-life";
+import type { TodayTask } from "@/lib/types";
+import { useCheckIn } from "@/lib/hooks/use-store";
+
+interface TaskRowProps {
+  item: TodayTask;
+  onUpdate: () => void;
+  showChallenge?: boolean;
+}
+
+export function TaskRow({ item, onUpdate, showChallenge = false }: TaskRowProps) {
+  const { task, challenge, progress, streak } = item;
+  const { toggleComplete } = useCheckIn();
+
+  const isCompleted = progress?.completed ?? false;
+
+  const handleToggle = () => {
+    if (!isCompleted) injectCell();
+    toggleComplete(task.id);
+    onUpdate();
+  };
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 py-2.5 px-3 border transition-all",
+        isCompleted
+          ? "border-green-600/30 bg-green-950/5 dark:border-green-500/20 dark:bg-green-950/10 shadow-[0_0_8px_rgba(34,197,94,0.1)]"
+          : "border-border bg-card"
+      )}
+    >
+      <button
+        onClick={handleToggle}
+        className={cn(
+          "flex h-5 w-5 shrink-0 items-center justify-center border transition-all",
+          isCompleted
+            ? "border-green-500 bg-green-600 text-white shadow-[0_0_6px_rgba(34,197,94,0.5)]"
+            : "border-foreground/30"
+        )}
+      >
+        {isCompleted && <Check className="h-3 w-3" strokeWidth={3} />}
+      </button>
+
+      <div className="min-w-0 flex-1">
+        <p className={cn(
+          "text-sm truncate",
+          isCompleted && "line-through text-muted-foreground"
+        )}>
+          {task.title}
+        </p>
+        {showChallenge && (
+          <p className="font-mono text-[9px] text-muted-foreground truncate">
+            {challenge.title}
+          </p>
+        )}
+      </div>
+
+      <StreakFlame count={streak} size="sm" />
+    </div>
+  );
+}
